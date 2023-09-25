@@ -123,7 +123,14 @@ func (p *Page) Fetch() error {
 	p.Title = html.UnescapeString(matched[0][1])
 	matched = contentre.FindAllStringSubmatch(dats, -1)
 	if len(matched) > 0 {
-		p.ContentURLs = make([]string, len(matched))
+		if p.ContentURLs == nil {
+			p.ContentURLs = *stringarraypool.SelectFromPool()
+		}
+		if len(p.ContentURLs) > len(matched) {
+			p.ContentURLs = p.ContentURLs[:len(matched)]
+		} else if len(p.ContentURLs) < len(matched) {
+			p.ContentURLs = append(p.ContentURLs, make([]string, len(matched)-len(p.ContentURLs))...)
+		}
 		for i, pairs := range matched {
 			p.ContentURLs[i] = pairs[1]
 		}
@@ -134,8 +141,13 @@ func (p *Page) Fetch() error {
 // DownloadContentsTo 并发下载图片到 dir/title/index.webp
 //
 // retry 小于 0 表示无穷
-func (p *Page) DownloadContentsTo(dir string, retry int) error {
+func (p *Page) DownloadContentsTo(dir string, retry int, override bool) error {
 	namefmt := path.Join(dir, p.Title)
+	if !override {
+		if _, err := os.Stat(namefmt); err == nil {
+			return nil
+		}
+	}
 	err := os.MkdirAll(namefmt, 0755)
 	if err != nil {
 		return err
@@ -197,4 +209,12 @@ func (p *Page) DownloadContentsTo(dir string, retry int) error {
 		return nil
 	}
 	return *atomicerr.Load()
+}
+
+// Reset ...
+func (p *Page) Reset() {
+	p.ShortLinkP = 0
+	p.CanonicalURL = ""
+	stringarraypool.PutIntoPool(&p.ContentURLs)
+	p.ContentURLs = nil
 }

@@ -5,16 +5,16 @@ import (
 	"testing"
 )
 
-var testhtml, err = os.ReadFile("5363.html")
-
-func init() {
+var pagetesthtml = func() []byte {
+	data, err := os.ReadFile("5363.html")
 	if err != nil {
 		panic(err)
 	}
-}
+	return data
+}()
 
-func TestShortLinkRegex(t *testing.T) {
-	matched := shortlinkre.FindAllStringSubmatch(BytesToString(testhtml), -1)
+func TestPageShortLinkRegex(t *testing.T) {
+	matched := shortlinkre.FindAllStringSubmatch(BytesToString(pagetesthtml), -1)
 	if len(matched) != 1 {
 		t.Fatal("unexpected matched len:", len(matched))
 	}
@@ -24,8 +24,8 @@ func TestShortLinkRegex(t *testing.T) {
 	}
 }
 
-func TestCanonicalRegex(t *testing.T) {
-	matched := canonicalre.FindAllStringSubmatch(BytesToString(testhtml), -1)
+func TestPageCanonicalRegex(t *testing.T) {
+	matched := canonicalre.FindAllStringSubmatch(BytesToString(pagetesthtml), -1)
 	if len(matched) != 1 {
 		t.Fatal("unexpected matched len:", len(matched))
 	}
@@ -35,8 +35,8 @@ func TestCanonicalRegex(t *testing.T) {
 	}
 }
 
-func TestTitleRegex(t *testing.T) {
-	matched := titlere.FindAllStringSubmatch(BytesToString(testhtml), -1)
+func TestPageTitleRegex(t *testing.T) {
+	matched := titlere.FindAllStringSubmatch(BytesToString(pagetesthtml), -1)
 	if len(matched) != 1 {
 		t.Fatal("unexpected matched len:", len(matched))
 	}
@@ -46,8 +46,8 @@ func TestTitleRegex(t *testing.T) {
 	}
 }
 
-func TestContentsRegex(t *testing.T) {
-	matched := contentre.FindAllStringSubmatch(BytesToString(testhtml), -1)
+func TestPageContentsRegex(t *testing.T) {
+	matched := contentre.FindAllStringSubmatch(BytesToString(pagetesthtml), -1)
 	if len(matched) != 85 {
 		t.Fatal("unexpected matched len:", len(matched))
 	}
@@ -57,7 +57,7 @@ func TestContentsRegex(t *testing.T) {
 	}
 }
 
-func TestFetch(t *testing.T) {
+func TestPageFetch(t *testing.T) {
 	page := Page{ShortLinkP: 5363}
 	err := page.Fetch()
 	if err != nil {
@@ -80,13 +80,13 @@ func TestFetch(t *testing.T) {
 	}
 }
 
-func TestDownloadContentsTo(t *testing.T) {
+func TestPageDownloadContentsTo(t *testing.T) {
 	page := Page{ShortLinkP: 5183}
 	err := page.Fetch()
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = page.DownloadContentsTo("tmp", 3)
+	err = page.DownloadContentsTo("tmp", 3, true)
 	if err != nil {
 		t.Fatal(err)
 	}
