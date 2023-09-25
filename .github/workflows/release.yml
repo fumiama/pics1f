@@ -33,25 +33,25 @@ jobs:
         run: go mod tidy
 
       - name: Build linux-x64
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o artifacts/pics1f-linux-x64 -trimpath
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o artifacts/pics1f-linux-x64 -trimpath cmd/main.go
       - name: Build linux-x86
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -ldflags="-s -w" -o artifacts/pics1f-linux-x86 -trimpath
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -ldflags="-s -w" -o artifacts/pics1f-linux-x86 -trimpath cmd/main.go
       - name: Build windows-x64
-        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o artifacts/pics1f-windows-x64.exe -trimpath
+        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o artifacts/pics1f-windows-x64.exe -trimpath cmd/main.go
       - name: Build windows-x86
-        run: CGO_ENABLED=0 GOOS=windows GOARCH=386 go build -ldflags="-s -w" -o artifacts/pics1f-windows-x86.exe -trimpath
+        run: CGO_ENABLED=0 GOOS=windows GOARCH=386 go build -ldflags="-s -w" -o artifacts/pics1f-windows-x86.exe -trimpath cmd/main.go
       - name: Build arm64
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GOARM=7 go build -ldflags="-s -w" -o artifacts/pics1f-linux-arm64 -trimpath
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GOARM=7 go build -ldflags="-s -w" -o artifacts/pics1f-linux-arm64 -trimpath cmd/main.go
       - name: Build armv6
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build -ldflags="-s -w" -o artifacts/pics1f-linux-armv6 -trimpath
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build -ldflags="-s -w" -o artifacts/pics1f-linux-armv6 -trimpath cmd/main.go
       - name: Build mips
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=mips go build -ldflags="-s -w" -o artifacts/pics1f-linux-mips -trimpath
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=mips go build -ldflags="-s -w" -o artifacts/pics1f-linux-mips -trimpath cmd/main.go
       - name: Build mips-softfloat
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=mips GOMIPS=softfloat go build -ldflags="-s -w" -o artifacts/pics1f-linux-mips-softfloat -trimpath
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=mips GOMIPS=softfloat go build -ldflags="-s -w" -o artifacts/pics1f-linux-mips-softfloat -trimpath cmd/main.go
       - name: Build mipsel
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=mipsle go build -ldflags="-s -w" -o artifacts/pics1f-linux-mipsel -trimpath
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=mipsle go build -ldflags="-s -w" -o artifacts/pics1f-linux-mipsel -trimpath cmd/main.go
       - name: Build mipsel-softfloat
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=mipsle GOMIPS=softfloat go build -ldflags="-s -w" -o artifacts/pics1f-linux-mipsel-softfloat -trimpath
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=mipsle GOMIPS=softfloat go build -ldflags="-s -w" -o artifacts/pics1f-linux-mipsel-softfloat -trimpath cmd/main.go
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
