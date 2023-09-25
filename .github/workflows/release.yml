@@ -9,7 +9,7 @@ env:
 
 jobs:
   my-job:
-    name: Build DupImage on Push Tag 🚀
+    name: Build on Push Tag 🚀
     runs-on: ubuntu-latest
     steps:
 
