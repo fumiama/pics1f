@@ -86,7 +86,9 @@ func TestPageDownloadContentsTo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = page.DownloadContentsTo("tmp", 3, true)
+	err = page.DownloadContentsTo("tmp", 3, true, func(err error) {
+		t.Fatal(err)
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

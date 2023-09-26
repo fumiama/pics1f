@@ -9,9 +9,9 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"runtime"
 	"strconv"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -21,6 +21,7 @@ var (
 	ErrCanonicalURLMismatched = errors.New("canonical url mismatched")
 	ErrInvalidShortLinkP      = errors.New("invalid shortlink p")
 	ErrTooManyContents        = errors.New("too many contents")
+	ErrMaxRetryTimeExceeded   = errors.New("max retry time exceeded")
 )
 
 const (
@@ -141,7 +142,7 @@ func (p *Page) Fetch() error {
 // DownloadContentsTo 并发下载图片到 dir/title/index.webp
 //
 // retry 小于 0 表示无穷
-func (p *Page) DownloadContentsTo(dir string, retry int, override bool) error {
+func (p *Page) DownloadContentsTo(dir string, retry int, override bool, errcallback func(error)) error {
 	namefmt := path.Join(dir, p.Title)
 	if !override {
 		if _, err := os.Stat(namefmt); err == nil {
@@ -165,50 +166,63 @@ func (p *Page) DownloadContentsTo(dir string, retry int, override bool) error {
 	default:
 		return ErrTooManyContents
 	}
+	n := runtime.NumCPU()
+	batch := len(p.ContentURLs) / n
+	dlonepage := func(i int, u string) error {
+		n := 0
+		var resp *http.Response
+		var err error
+		req, err := http.NewRequest("GET", u, nil)
+		if err != nil {
+			return err
+		}
+		req.Header.Add("Accept", `image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8`)
+		req.Header.Add("Referer", `http://pic.s1f.pw/`)
+		req.Header.Add("User-Agent", UserAgent)
+		for retry < 0 || n <= retry {
+			resp, err = HTTPClient.Do(req)
+			if err != nil {
+				errcallback(err)
+				time.Sleep(time.Millisecond * 100)
+				n++
+				continue
+			}
+			break
+		}
+		if retry >= 0 && n > retry {
+			return ErrMaxRetryTimeExceeded
+		}
+		defer resp.Body.Close()
+		filepath := fmt.Sprintf(namefmt, i)
+		f, err := os.Create(filepath)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		_, err = io.Copy(f, resp.Body)
+		return err
+	}
+	dlbatch := func(wg *sync.WaitGroup, offset int, urls []string) {
+		defer wg.Done()
+		for i, u := range urls {
+			err := dlonepage(offset+i, u)
+			if err != nil {
+				errcallback(err)
+			}
+		}
+	}
 	wg := sync.WaitGroup{}
-	wg.Add(i)
-	var atomicerr atomic.Pointer[error]
-	for i, u := range p.ContentURLs {
-		go func(i int, u string) {
-			defer wg.Done()
-			n := 0
-			var resp *http.Response
-			var err error
-			for retry < 0 || n <= retry {
-				resp, err = http.Get(u)
-				if err != nil {
-					copiederr := err
-					atomicerr.Store(&copiederr)
-					time.Sleep(time.Millisecond * 100)
-					n++
-					continue
-				}
-				break
-			}
-			if retry >= 0 && n > retry {
-				return
-			}
-			defer resp.Body.Close()
-			filepath := fmt.Sprintf(namefmt, i)
-			f, err := os.Create(filepath)
-			if err != nil {
-				atomicerr.Store(&err)
-				return
-			}
-			defer f.Close()
-			_, err = io.Copy(f, resp.Body)
-			if err != nil {
-				atomicerr.Store(&err)
-				return
-			}
-		}(i+1, u)
-		time.Sleep(time.Millisecond * 10)
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		go dlbatch(&wg, i*batch, p.ContentURLs[i*batch:(i+1)*batch])
+		time.Sleep(time.Millisecond * 100)
+	}
+	if len(p.ContentURLs) > n*batch {
+		wg.Add(1)
+		go dlbatch(&wg, n*batch, p.ContentURLs[n*batch:])
 	}
 	wg.Wait()
-	if atomicerr.Load() == nil {
-		return nil
-	}
-	return *atomicerr.Load()
+	return nil
 }
 
 // Reset ...

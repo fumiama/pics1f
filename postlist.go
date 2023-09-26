@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"regexp"
 	"strconv"
 )
@@ -57,7 +56,6 @@ func (pl *PostList) Fetch() error {
 		return err
 	}
 	dats := BytesToString(data)
-	_ = os.WriteFile("t.html", data, 0644)
 	matched := currentindexre.FindAllStringSubmatch(dats, -1)
 	if len(matched) != 1 {
 		return fmt.Errorf("unexpected current index matched len: %d", len(matched))

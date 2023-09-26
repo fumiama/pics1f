@@ -21,11 +21,13 @@ func main() {
 		for i, p := range pl.Pages {
 			err = p.Fetch()
 			if err != nil {
-				fmt.Println("[ERROR] fetching index", pl.Index, "page", i, "->", err)
+				fmt.Println("[ERROR] fetching index", pl.Index, "page", i+1, "->", err)
 			}
-			err = p.DownloadContentsTo(*dir, (int)(*retry), *override)
+			err = p.DownloadContentsTo(*dir, (int)(*retry), *override, func(err error) {
+				fmt.Println("[ERROR] downloading index", pl.Index, "page", i+1, "->", err)
+			})
 			if err != nil {
-				fmt.Println("[ERROR] downloading index", pl.Index, "page", i, "->", err)
+				fmt.Println("[ERROR] calling to download index", pl.Index, "page", i+1, "->", err)
 			}
 			fmt.Printf("\r[INFO] progress: %d / %d                    ", i+1, len(pl.Pages))
 		}
