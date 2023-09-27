@@ -166,8 +166,12 @@ func (p *Page) DownloadContentsTo(dir string, retry int, override bool, errcallb
 	default:
 		return ErrTooManyContents
 	}
-	n := runtime.NumCPU()
+	n := runtime.NumCPU() * 4
 	batch := len(p.ContentURLs) / n
+	if batch == 0 {
+		batch = 1
+		n = len(p.ContentURLs)
+	}
 	dlonepage := func(i int, u string) error {
 		n := 0
 		var resp *http.Response
@@ -217,7 +221,7 @@ func (p *Page) DownloadContentsTo(dir string, retry int, override bool, errcallb
 		go dlbatch(&wg, i*batch, p.ContentURLs[i*batch:(i+1)*batch])
 		time.Sleep(time.Millisecond * 100)
 	}
-	if len(p.ContentURLs) > n*batch {
+	if batch > 1 && len(p.ContentURLs) > n*batch {
 		wg.Add(1)
 		go dlbatch(&wg, n*batch, p.ContentURLs[n*batch:])
 	}

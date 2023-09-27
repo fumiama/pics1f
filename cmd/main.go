@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/fumiama/pics1f"
 )
@@ -13,7 +14,22 @@ func main() {
 	dir := flag.String("d", "./dl", "download dir")
 	retry := flag.Uint("r", 3, "retry times")
 	override := flag.Bool("o", true, "override")
+	pageid := flag.Int("p", 0, "only download this page")
 	flag.Parse()
+	if *pageid > 0 {
+		p, err := pics1f.NewPageShortLink(*pageid)
+		if err != nil {
+			fmt.Println("[ERROR] fetching page id", *pageid, "->", err)
+			os.Exit(1)
+		}
+		err = p.DownloadContentsTo(*dir, (int)(*retry), *override, func(err error) {
+			fmt.Println("[ERROR] downloading page id", *pageid, "->", err)
+		})
+		if err != nil {
+			fmt.Println("[ERROR] calling to download page id", *pageid, "->", err)
+		}
+		return
+	}
 	pl := pics1f.NewPostList((int)(*index))
 	err := pl.Fetch()
 	for err == nil {
