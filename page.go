@@ -22,6 +22,7 @@ var (
 	ErrInvalidShortLinkP      = errors.New("invalid shortlink p")
 	ErrTooManyContents        = errors.New("too many contents")
 	ErrMaxRetryTimeExceeded   = errors.New("max retry time exceeded")
+	ErrInvalidMultiplier      = errors.New("invalid multiplier")
 )
 
 const (
@@ -142,7 +143,10 @@ func (p *Page) Fetch() error {
 // DownloadContentsTo 并发下载图片到 dir/title/index.webp
 //
 // retry 小于 0 表示无穷
-func (p *Page) DownloadContentsTo(dir string, retry int, override bool, errcallback func(error)) error {
+func (p *Page) DownloadContentsTo(dir string, retry int, override bool, threadmultiplier int, errcallback func(error)) error {
+	if threadmultiplier <= 0 {
+		return ErrInvalidMultiplier
+	}
 	namefmt := path.Join(dir, p.Title)
 	if !override {
 		if _, err := os.Stat(namefmt); err == nil {
@@ -166,7 +170,7 @@ func (p *Page) DownloadContentsTo(dir string, retry int, override bool, errcallb
 	default:
 		return ErrTooManyContents
 	}
-	n := runtime.NumCPU() * 4
+	n := runtime.NumCPU() * threadmultiplier
 	batch := len(p.ContentURLs) / n
 	if batch == 0 {
 		batch = 1
