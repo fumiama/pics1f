@@ -148,11 +148,6 @@ func (p *Page) DownloadContentsTo(dir string, retry int, override bool, threadmu
 		return ErrInvalidMultiplier
 	}
 	namefmt := path.Join(dir, p.Title)
-	if !override {
-		if _, err := os.Stat(namefmt); err == nil {
-			return nil
-		}
-	}
 	err := os.MkdirAll(namefmt, 0755)
 	if err != nil {
 		return err
@@ -178,6 +173,12 @@ func (p *Page) DownloadContentsTo(dir string, retry int, override bool, threadmu
 	}
 	dlonepage := func(i int, u string) error {
 		n := 0
+		filepath := fmt.Sprintf(namefmt, i)
+		if !override {
+			if _, err := os.Stat(filepath); err == nil {
+				return nil
+			}
+		}
 		var resp *http.Response
 		var err error
 		req, err := http.NewRequest("GET", u, nil)
@@ -201,7 +202,6 @@ func (p *Page) DownloadContentsTo(dir string, retry int, override bool, threadmu
 			return ErrMaxRetryTimeExceeded
 		}
 		defer resp.Body.Close()
-		filepath := fmt.Sprintf(namefmt, i)
 		f, err := os.Create(filepath)
 		if err != nil {
 			return err
